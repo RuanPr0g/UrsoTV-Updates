@@ -1,0 +1,46 @@
+name: Sync Urso TV OTA APK
+
+on:
+  push:
+    paths:
+      - "sync-ota.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout OTA repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download and verify signed 0.9.26 APK artifact
+        shell: bash
+        env:
+          EXPECTED_SHA256: 1093eea810f5f7845a87573e30dac458ff65233d78337222a65ee990e1302604
+          ARTIFACT_URL: "https://sdmntprbrazilsouth.oaiusercontent.com/files/00000000-fd28-820e-8ab4-a700a46f98bc/raw?se=2026-11-02T09%3A27%3A29Z&sp=r&sv=2026-02-06&sr=b&scid=f3f72db2-14a3-511a-919f-dabcebd69589&skoid=fbc53507-c13f-4907-b4dd-0e03c91f5ad8&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T23%3A43%3A34Z&ske=2026-11-02T23%3A43%3A34Z&sks=b&skv=2026-02-06&sig=kaXkUxU8vueotcAcfMD5SvRDTlJAUlaFt7OeMD%2B3kXo%3D"
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --retry-all-errors \
+            --output artifact.zip "$ARTIFACT_URL"
+          unzip -p artifact.zip urso-tv.apk > urso-tv-v0.9.26.apk
+          test -s urso-tv-v0.9.26.apk
+          printf '%s  %s\n' "$EXPECTED_SHA256" "urso-tv-v0.9.26.apk" | sha256sum --check -
+
+      - name: Publish APK to public OTA repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add urso-tv-v0.9.26.apk
+          if git diff --cached --quiet; then
+            echo "APK already synchronized."
+            exit 0
+          fi
+          git commit -m "Publish Urso TV 0.9.26 OTA APK"
+          git push origin HEAD:main
