@@ -1,1 +1,3 @@
 Sync Urso TV 0.9.24 APK into the stable OTA download repository.
+
+Retry OTA APK synchronization after switching to the verified build artifact.
