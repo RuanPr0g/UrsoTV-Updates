@@ -18,15 +18,16 @@ jobs:
         with:
           ref: main
 
-      - name: Download and verify official release APK
+      - name: Download and verify official APK artifact
         shell: bash
         env:
           EXPECTED_SHA256: a3fcb35a95e7e0f206364ff381b98a4e6edd39dce52a52ecd367c865daf96cc0
+          ARTIFACT_URL: "https://sdmntprbrazilsouth.oaiusercontent.com/files/00000000-b55c-820e-b96a-3b6a16029949/raw?se=2026-11-02T05%3A36%3A45Z&sp=r&sv=2026-02-06&sr=b&scid=d715ac69-0389-53f5-8226-742dd9cbead1&skoid=fbc53507-c13f-4907-b4dd-0e03c91f5ad8&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-02T00%3A04%3A10Z&ske=2026-11-03T00%3A04%3A10Z&sks=b&skv=2026-02-06&sig=PNbBTSET8YX8IOkW3YoZV07MruNFmlpLqkhuQX9MUNo%3D"
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 --retry-all-errors \
-            --output urso-tv-v0.9.24.apk \
-            "https://github.com/RuanPr0g/DuoTV/releases/download/v0.9.24/urso-tv.apk"
+          curl --fail --location --retry 2 --retry-all-errors \
+            --output artifact.zip "$ARTIFACT_URL"
+          unzip -p artifact.zip urso-tv.apk > urso-tv-v0.9.24.apk
           printf '%s  %s\n' "$EXPECTED_SHA256" "urso-tv-v0.9.24.apk" | sha256sum --check -
 
       - name: Publish APK to the OTA download repository
