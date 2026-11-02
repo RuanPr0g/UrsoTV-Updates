@@ -1,0 +1,44 @@
+name: Sync Urso TV OTA APK
+
+on:
+  push:
+    paths:
+      - "sync-ota.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout OTA repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download and verify official release APK
+        shell: bash
+        env:
+          EXPECTED_SHA256: a3fcb35a95e7e0f206364ff381b98a4e6edd39dce52a52ecd367c865daf96cc0
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output urso-tv-v0.9.24.apk \
+            "https://github.com/RuanPr0g/DuoTV/releases/download/v0.9.24/urso-tv.apk"
+          printf '%s  %s\n' "$EXPECTED_SHA256" "urso-tv-v0.9.24.apk" | sha256sum --check -
+
+      - name: Publish APK to the OTA download repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add urso-tv-v0.9.24.apk
+          if git diff --cached --quiet; then
+            echo "APK already synchronized."
+            exit 0
+          fi
+          git commit -m "Publish Urso TV 0.9.24 OTA APK"
+          git push origin HEAD:main
