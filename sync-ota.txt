@@ -1,1 +1,0 @@
-Synchronize the signed Urso TV 0.9.26 APK into the public OTA repository.
